@@ -28,7 +28,10 @@ const app = express()
 const port = 3000
 
 app.use((req, res, next) => {
-    handle(config, req, res)
+    handle(
+      config /* create your own like https://github.com/dharmendrasha/outgoing_request#sample-config*/, 
+      req, 
+      res)
     next()
     return
 })
