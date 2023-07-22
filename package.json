@@ -7,7 +7,8 @@
   "scripts": {
     "prebuild": "rimraf lib",
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "prepublish": "npm run prebuild && npm run build"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
