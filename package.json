@@ -9,6 +9,14 @@
     "build": "tsc",
     "test": "jest"
   },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "repository": {
+    "url": "https://github.com/dharmendrasha/outgoing_request.git",
+    "type": "git"
+  },
   "keywords": [
     "node",
     "outgoing",
@@ -20,7 +28,7 @@
     "url": "https://github.com/dharmendrasha",
     "email": "dharmendrashaheagle@gmail.com"
   },
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@jest/globals": "^29.6.1",
     "@types/axios": "^0.14.0",
