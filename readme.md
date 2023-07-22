@@ -2,6 +2,10 @@
 
 NodeJs Outgoing request logger
 
+1. [GITHUB link](https://github.com/dharmendrasha/outgoing_request)
+
+2. [NPM link](https://www.npmjs.com/package/@dharmendrasha/outgoing_request)
+
 ## Installation
 
 Install this package with multiple package manager like pnpm | yarn | yarn take a look these commands
