@@ -1,6 +1,6 @@
 {
   "name": "@dharmendrasha/outgoing_request",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Manages and records the outgoing records from nodejs application.",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -20,8 +20,12 @@
   "keywords": [
     "node",
     "outgoing",
+    "moesif",
     "outgoing_request",
-    "request"
+    "request",
+    "outbound",
+    "tracking",
+    "logging"
   ],
   "author": {
     "name": "Dharmendra Shah",
