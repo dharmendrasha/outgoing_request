@@ -6,6 +6,7 @@ test
 jest.config.ts
 tsconfig.json
 *.log
+.npmrc
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
