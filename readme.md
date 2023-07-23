@@ -24,6 +24,8 @@ pnpm add @dharmendrasha/outgoing_request
 
 # Usage
 
+CommonJS
+
 ```javascript
 const { config, handler } = require('@dharmendrasha/outgoing_request')
 const express = require('express')
@@ -49,6 +51,57 @@ app.get('/', async (req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
+```
+
+```typescript
+//OutGoingRequestHandler.ts
+import { Request, Response, NextFunction } from 'express';
+import { config, handle } from '@dharmendrasha/outgoing_request';
+import { logger } from './log.util';
+
+export function OutGoingRequestLogger() {
+    return (_req: Request, _res: Response, next: NextFunction) => {
+        config.onRequest = (..._args: string[]) => null;
+        config.onResponse = (id, rawHeaders, statusCode, message, httpVersion) => {
+            const is4xx = Number(statusCode) > 399;
+            if (!is4xx) {
+                return;
+            }
+
+            logger.error(
+                `request failed headers=${String(
+                    rawHeaders,
+                )} statusCode=${statusCode} message=${String(
+                    message,
+                )} version=${httpVersion} id=${id}`,
+            );
+        };
+        handle(config, _req, _res);
+        return next();
+    };
+}
+
+//main.ts
+import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { AppModule } from './app/app.module';
+
+async function bootstrap(){
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+      logger: logger,
+      abortOnError: isDevelopment(),
+      bufferLogs: isDevelopment(),
+  });
+
+  app.disable('x-powered-by');
+
+  app.use(OutGoingRequestLogger());
+
+  app.listen(port);
+}
+
+bootstrap();
+
 ```
 
 # Sample Config
