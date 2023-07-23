@@ -24,7 +24,9 @@ pnpm add @dharmendrasha/outgoing_request
 
 # Usage
 
-CommonJS
+## CommonJS
+
+eg.
 
 ```javascript
 const { config, handler } = require('@dharmendrasha/outgoing_request')
@@ -52,6 +54,10 @@ app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
 ```
+
+## Typescript
+
+eg.
 
 ```typescript
 //OutGoingRequestHandler.ts
