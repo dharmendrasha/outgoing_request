@@ -36,7 +36,6 @@
   "license": "MIT",
   "devDependencies": {
     "@jest/globals": "^29.6.1",
-    "@types/axios": "^0.14.0",
     "@types/jest": "^29.5.3",
     "@types/node": "^20.4.3",
     "axios": "^1.4.0",
