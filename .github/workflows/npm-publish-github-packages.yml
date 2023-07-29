@@ -6,6 +6,9 @@ on:
       release-type:
         description: "Release type (one of): patch, minor, major, prepatch, preminor, premajor, prerelease"
         required: true
+    paths:
+      - "src/**/**/**" # run only if the src folder is chaged
+      - "package.json"
 jobs:
   build:
     runs-on: ubuntu-latest
