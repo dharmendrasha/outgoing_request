@@ -35,14 +35,10 @@ const axios = require('axios')
 const app = express()
 const port = 3000
 
-app.use((req, res, next) => {
-    handle(
-      config /* create your own like https://github.com/dharmendrasha/outgoing_request#sample-config*/, 
-      req, 
-      res)
-    next()
-    return
-})
+handle(
+  function onRequest(id, method, host, path, protocol, headers){/* callback for onRequest */}, 
+  function onResponse(id, method, rawHeaders, statusCode, statusMessage:, httpVersion){/* callback for nResponse */}
+  )
 
 app.get('/', async (req, res) => {
 
@@ -65,27 +61,7 @@ import { Request, Response, NextFunction } from 'express';
 import { config, handle } from '@dharmendrasha/outgoing_request';
 import { logger } from './log.util';
 
-export function OutGoingRequestLogger() {
-    return (_req: Request, _res: Response, next: NextFunction) => {
-        config.onRequest = (..._args: string[]) => null;
-        config.onResponse = (id, rawHeaders, statusCode, message, httpVersion) => {
-            const is4xx = Number(statusCode) > 399;
-            if (!is4xx) {
-                return;
-            }
 
-            logger.error(
-                `request failed headers=${String(
-                    rawHeaders,
-                )} statusCode=${statusCode} message=${String(
-                    message,
-                )} version=${httpVersion} id=${id}`,
-            );
-        };
-        handle(config, _req, _res);
-        return next();
-    };
-}
 
 //main.ts
 import { NestFactory } from '@nestjs/core';
@@ -101,50 +77,15 @@ async function bootstrap(){
 
   app.disable('x-powered-by');
 
-  app.use(OutGoingRequestLogger());
+  handle(
+    (id: string, method: string, host: string | number | string[] | undefined, path: string, protocol: string, headers: OutgoingHttpHeaders) => { /** call back for on request */},
+    (id: string, method: string | undefined, url: string | undefined, rawHeaders: IncomingHttpHeaders, statusCode: number | undefined, statusMessage: string | undefined, httpVersion: string) => { /** call back for on response **/}
+    );
 
   app.listen(port);
 }
 
 bootstrap();
-
-```
-
-# Sample Config
-
-```typescript
-import crypto from "crypto";
-
-export const config = {
-  request_body: true, // should body be printed after response
-  logger: console, // native node console
-  disable_brand: false, // will log the 'x-traced-by' to the request and response header
-  getId: () => crypto.randomUUID(), // generate a uuid for each request to maintain
-  onRequest: (
-    id: string,
-    method: string,
-    host: string,
-    path: string,
-    headers: string
-  ) => {
-    config.logger.log({ id, method, host, path, headers });
-  },
-  onResponse: (
-    id: string,
-    rawHeaders: string,
-    statusCode: string,
-    statusMessage: string,
-    httpVersion: string
-  ) => {
-    config.logger.log({
-      id,
-      rawHeaders,
-      statusCode,
-      statusMessage,
-      httpVersion,
-    });
-  },
-};
 
 ```
 
