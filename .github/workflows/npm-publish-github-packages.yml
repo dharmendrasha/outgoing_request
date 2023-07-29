@@ -72,13 +72,12 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
-      - name: Push changes to repository
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git remote remove origin
-          git remote add origin https://gha:${{ github.token }}@github.com/${{ github.repository }}.git
-          git push --set-upstream origin main && git push --tags
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          branch: ${{ github.head_ref }}
+          github_token: ${{ secrets.PAT_TOKEN }}
+          tags: true
 
       - id: get-changelog
         name: Get version changelog
