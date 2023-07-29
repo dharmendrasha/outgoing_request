@@ -1,114 +1,99 @@
-import { config } from "./../conf/index";
-import http from "http";
+import http, {
+  ClientRequest,
+  IncomingHttpHeaders,
+  IncomingMessage,
+  OutgoingHttpHeaders,
+} from "http";
 import https from "https";
-import { getPackageName } from "./readPackage";
+import crypto from "crypto";
 
-declare global {
-  namespace Http {
-    namespace IncomingMessage {
-      export interface headers {
-        ["x-traced-by"]?: string;
-      }
-    }
-  }
-}
+export type onRequest = (
+  id: string,
+  method: string,
+  host: string | number | string[] | undefined,
+  path: string,
+  protocol: string,
+  headers: OutgoingHttpHeaders
+) => any;
 
-function outgoingRequest(conf: typeof config) {
-  return function closure(this: any, func: Function, ...rest: any[]) {
-    const req = func.call(this, ...rest);
+export type onResponse = (
+  id: string,
+  method: string | undefined,
+  url: string | undefined,
+  rawHeaders: IncomingHttpHeaders,
+  statusCode: number | undefined,
+  statusMessage: string | undefined,
+  httpVersion: string
+) => any;
 
-    const id = conf.getId();
+const generateId = (): string => crypto.randomUUID();
 
-    if (conf.request_body) {
-      emitWithRequestBody(req, id, conf);
-    } else {
-      req.prependOnceListener("finish", () =>
-        conf.onRequest(
-          id,
-          req.method,
-          req.getHeader("host"),
-          req.path,
-          req.getHeaders()
-        )
-      );
-    }
+function outgoingRequest(
+  onRequest: onRequest,
+  onResponse: onResponse,
+  getId = generateId
+) {
+  return function (this: any, func: Function, ...rest: any[]) {
+    const req: ClientRequest = func.call(this, ...rest);
 
-    req.prependOnceListener(
-      "response",
-      function (
-        /** @type {http.IncomingMessage} */ res: {
-          rawHeaders: any;
-          statusCode: any;
-          statusMessage: any;
-          httpVersion: any;
-        }
-      ) {
-        const { rawHeaders, statusCode, statusMessage, httpVersion } = res;
+    const id = getId();
 
-        conf.onResponse(id, rawHeaders, statusCode, statusMessage, httpVersion);
-      }
+    req.prependOnceListener("finish", () =>
+      onRequest(
+        id,
+        req.method,
+        req.getHeader("host"),
+        req.path,
+        req.protocol,
+        req.getHeaders()
+      )
     );
+
+    req.prependOnceListener("response", function (res: IncomingMessage) {
+      const { headers, method, url, statusCode, statusMessage, httpVersion } =
+        res;
+
+      onResponse(
+        id,
+        method,
+        url,
+        headers,
+        statusCode,
+        statusMessage,
+        httpVersion
+      );
+    });
 
     return req;
   };
 }
 
-function emitWithRequestBody(req: any, id: string, conf: typeof config) {
-  const requestBody: any[] = [];
-
-  const { Buffer } = require("buffer");
-  const reqWrite = req.write;
-  req.write = function (...args: any) {
-    const chunk = args[0];
-
-    if (Buffer.isBuffer(chunk)) {
-      requestBody.push(chunk.toString());
-    } else {
-      requestBody.push(chunk);
-    }
-
-    return reqWrite.apply(this, ...args);
-  };
-
-  const reqEnd = req.end;
-  req.end = function (...args: any[]) {
-    const maybeChunk = args[0];
-
-    if (Buffer.isBuffer(maybeChunk)) {
-      requestBody.push(maybeChunk.toString());
-    } else if (maybeChunk && typeof maybeChunk !== "function") {
-      requestBody.push(maybeChunk);
-    }
-
-    return reqEnd.apply(this, arguments);
-  };
-
-  req.prependOnceListener("finish", () =>
-    conf.onRequest(
-      id,
-      req.method,
-      req.getHeader("host"),
-      req.path,
-      req.getHeaders()
-    )
-  );
-}
-
+/**
+ * It will bind the new function to the http|https calls
+ * @param onRequest {onRequest}
+ * @param onResponse {onResponse}
+ * @param request_body {Boolean}
+ * @param getId {generateId}
+ */
 export function handle(
-  conf = config,
-  req?: http.IncomingMessage,
-  res?: http.OutgoingMessage
+  onRequest: onRequest,
+  onResponse: onResponse,
+  getId = generateId
 ) {
-  const packageName = getPackageName();
-  if (conf.disable_brand === false) {
-    if (req) req.headers["x-traced-by"] = packageName;
-    if (res) res.setHeader("x-traced-by", packageName);
-  }
   // http
-  http.request = outgoingRequest(conf).bind(http, http.request);
-  http.get = outgoingRequest(conf).bind(http, http.get);
+  http.get = outgoingRequest(onRequest, onResponse, getId).bind(http, http.get);
+  http.request = outgoingRequest(onRequest, onResponse, getId).bind(
+    http,
+    http.request
+  );
 
   // https
-  https.get = outgoingRequest(conf).bind(https, https.get);
-  https.request = outgoingRequest(conf).bind(https, https.request);
+  https.get = outgoingRequest(onRequest, onResponse, getId).bind(
+    https,
+    https.get
+  );
+  https.request = outgoingRequest(onRequest, onResponse, getId).bind(
+    https,
+    https.request
+  );
 }
